@@ -1,0 +1,13 @@
+.map-entries {
+    border: 1px solid lightgrey;
+}
+
+.map-entries tbody td {
+    font-family: monospace;
+    padding: 3px 5px;
+}
+
+/* make rows alternate colors */
+.map-entries tbody tr:nth-child(even) {
+    background-color: #f6f6f6;
+}

@@ -7,6 +7,8 @@ import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 import {BaseStyles, ThemeProvider} from '@primer/react';
 import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import {store} from "./store/root";
+import {ProgramPage} from "./pages/program/ProgramPage";
+import {MapPage} from "./pages/map/MapPage";
 
 const client = new ApolloClient({
   uri: 'http://localhost:8080/query',
@@ -17,7 +19,17 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
-  },
+    children: [
+      {
+        path: "program/:programId",
+        element: <ProgramPage />,
+      },
+      {
+        path: "map/:mapId",
+        element: <MapPage />,
+      },
+    ],
+  }
 ]);
 
 const root = ReactDOM.createRoot(

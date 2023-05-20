@@ -1,34 +1,27 @@
-import {Header, NavList, PageLayout, StyledOcticon, SubNav, TreeView} from '@primer/react';
-import React from 'react';
-import {RootState, useAppDispatch, useAppSelector} from "../store/root";
-import {navigationActions} from "../store/navigation";
+import {Header, PageLayout, TreeView} from '@primer/react';
+import React, {useState} from 'react';
 import {useQuery} from "@apollo/client";
 import {gql} from "../graphql";
-
-// app props:
-// - nav selection
+import {Outlet} from "react-router-dom";
+import {MapNavItem, ProgramNavItem} from "../navigation/navigation";
 
 const GQL_QUERY_NAVIGATION = gql(/* GraphQL */ `
     query Navigation {
         programs {
             id
+            error
             name
             type
             tag
             runTime
             runCount
             btfId
-#            maps {
-#                id
-#            }
-            error
         }
         maps{
             id
             error
             name
             type
-            fd
             flags
             isPinned
             keySize
@@ -39,10 +32,11 @@ const GQL_QUERY_NAVIGATION = gql(/* GraphQL */ `
 `);
 
 function App() {
-  const dispatch = useAppDispatch();
-  const selectedKind = useAppSelector((state: RootState) => state.navigation.selectedKind);
 
-  const { loading, error, data } = useQuery(GQL_QUERY_NAVIGATION, {
+  const [mapsOpened, setMapsOpened] = useState(true);
+  const [progsOpened, setProgsOpened] = useState(true);
+
+  const {loading, error, data} = useQuery(GQL_QUERY_NAVIGATION, {
     pollInterval: 500
   });
   console.log(data, loading, error);
@@ -53,7 +47,7 @@ function App() {
         <Header>
           <Header.Item>
             <Header.Link href="#">
-              <span>ephy browser</span>
+              <span>eBPF explorer</span>
             </Header.Link>
           </Header.Item>
         </Header>
@@ -61,43 +55,25 @@ function App() {
       <PageLayout.Pane position="start">
         <nav aria-label="Files">
           <TreeView aria-label="Files">
-            <TreeView.Item id="maps">
+            <TreeView.Item id="maps" expanded={mapsOpened} onExpandedChange={setMapsOpened}>
               <TreeView.LeadingVisual>
-                <TreeView.DirectoryIcon />
+                <TreeView.DirectoryIcon/>
               </TreeView.LeadingVisual>
               Maps
-              <TreeView.SubTree>
-              {data?.maps && (
-                data.maps.map((map) => {
-                  return (
-                    <TreeView.Item id={map.id.toString()} key={map.id}>
-                      <TreeView.LeadingVisual>
-                        <TreeView.DirectoryIcon />
-                      </TreeView.LeadingVisual>
-                      {map.name}
-                    </TreeView.Item>
-                  )
-                })
-              )}
+              <TreeView.SubTree state={loading ? 'loading' : 'done'}>
+                {data?.maps && (
+                  data.maps.map((map: any) => <MapNavItem key={map.id} map={map} highlight={true} />)
+                )}
               </TreeView.SubTree>
             </TreeView.Item>
-            <TreeView.Item id="maps">
+            <TreeView.Item id="progs" expanded={progsOpened} onExpandedChange={setProgsOpened}>
               <TreeView.LeadingVisual>
-                <TreeView.DirectoryIcon />
+                <TreeView.DirectoryIcon/>
               </TreeView.LeadingVisual>
               Programs
-              <TreeView.SubTree>
+              <TreeView.SubTree state={loading ? 'loading' : 'done'}>
                 {data?.programs && (
-                  data.programs.map((prog) => {
-                    return (
-                      <TreeView.Item id={prog.id.toString()} key={prog.id}>
-                        <TreeView.LeadingVisual>
-                          <TreeView.DirectoryIcon />
-                        </TreeView.LeadingVisual>
-                        {prog.name}
-                      </TreeView.Item>
-                    )
-                  })
+                  data.programs.map((prog: any) => <ProgramNavItem key={prog.id} prog={prog} highlight={true} />)
                 )}
               </TreeView.SubTree>
             </TreeView.Item>
@@ -105,11 +81,8 @@ function App() {
         </nav>
       </PageLayout.Pane>
       <PageLayout.Content>
-        23123
+        <Outlet/>
       </PageLayout.Content>
-      <PageLayout.Footer>
-        112412412
-      </PageLayout.Footer>
     </PageLayout>
   );
 }
