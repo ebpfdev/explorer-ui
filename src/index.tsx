@@ -10,10 +10,6 @@ import {store} from "./store/root";
 import {ProgramPage} from "./pages/program/ProgramPage";
 import {MapPage} from "./pages/map/MapPage";
 
-const client = new ApolloClient({
-  uri: 'http://localhost:8080/query',
-  cache: new InMemoryCache(),
-});
 
 const router = createBrowserRouter([
   {
@@ -36,19 +32,38 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-root.render(
-  <ThemeProvider>
-      <ApolloProvider client={client}>
-        <Provider store={store}>
-          <React.StrictMode>
-            {/*<BaseStyles>*/}
-              <RouterProvider router={router} />
-            {/*</BaseStyles>*/}
-          </React.StrictMode>
-        </Provider>
-      </ApolloProvider>
-  </ThemeProvider>
-);
+function getConfig(): Promise<{agent_url?: string}> {
+  return fetch('/config.json')
+    .then(
+      response => response.json()
+    )
+    .catch(error => {
+      console.log('Couldn\'t fetch config', error);
+      return {};
+    });
+}
+
+getConfig()
+  .then(
+    (config) => {
+      const client = new ApolloClient({
+        uri: (config.agent_url ?? 'http://localhost:8080') + '/query',
+        cache: new InMemoryCache(),
+      })
+
+      root.render(
+        <ThemeProvider>
+          <ApolloProvider client={client}>
+            <Provider store={store}>
+              <React.StrictMode>
+                <RouterProvider router={router} />
+              </React.StrictMode>
+            </Provider>
+          </ApolloProvider>
+        </ThemeProvider>
+      );
+    }
+  )
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

@@ -6,7 +6,9 @@ COPY package.json .
 COPY yarn.lock .
 RUN yarn install --frozen-lockfile
 
-COPY . .
+COPY tsconfig.json .
+COPY public public
+COPY src src
 
 RUN yarn build
 

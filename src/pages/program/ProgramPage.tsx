@@ -4,9 +4,9 @@ import {gql} from "../../graphql";
 import React, {useCallback, useEffect} from "react";
 import {navigationActions} from "../../store/navigation";
 import {useAppDispatch} from "../../store/root";
-import {GetProgramQuery, Program} from "../../graphql/graphql";
-import {Box, Pagehead, TreeView} from "@primer/react";
-import {MapNavItem, ProgramNavItem} from "../../navigation/navigation";
+import {GetProgramQuery} from "../../graphql/graphql";
+import {Box, Flash, Pagehead, Spinner, TreeView} from "@primer/react";
+import {MapNavItem} from "../../navigation/navigation";
 
 const GQL_PROGRAM_QUERY = gql(/* GraphQL */ `
     query GetProgram($programId: Int!) {
@@ -95,8 +95,8 @@ export function ProgramPage() {
   });
 
   return (
-    (data?.program && !loading) ?
-      <ProgramPageContent program={data!.program}/>
-      : null
+    loading ? <Spinner size="large" /> :
+      error ? <Flash variant="danger">{error.message}</Flash> :
+        <ProgramPageContent program={data!.program}/>
   );
 }

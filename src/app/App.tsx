@@ -4,6 +4,7 @@ import {useQuery} from "@apollo/client";
 import {gql} from "../graphql";
 import {Outlet} from "react-router-dom";
 import {MapNavItem, ProgramNavItem} from "../navigation/navigation";
+import {MarkGithubIcon} from "@primer/octicons-react";
 
 const GQL_QUERY_NAVIGATION = gql(/* GraphQL */ `
     query Navigation {
@@ -48,6 +49,12 @@ function App() {
           <Header.Item>
             <Header.Link href="#">
               <span>eBPF explorer</span>
+            </Header.Link>
+          </Header.Item>
+          <Header.Item full></Header.Item>
+          <Header.Item mr={0}>
+            <Header.Link href="https://github.com/ebpfdev/explorer">
+              <MarkGithubIcon />
             </Header.Link>
           </Header.Item>
         </Header>
