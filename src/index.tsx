@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './app/App';
 import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
-import {BaseStyles, ThemeProvider} from '@primer/react';
+import {ThemeProvider} from '@primer/react';
 import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import {store} from "./store/root";
 import {ProgramPage} from "./pages/program/ProgramPage";
@@ -23,6 +23,10 @@ const router = createBrowserRouter([
       {
         path: "map/:mapId",
         element: <MapPage />,
+      },
+      {
+        path: "map/:mapId/entries",
+        element: <MapPage section={'entries'}/>,
       },
     ],
   }

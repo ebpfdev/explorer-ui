@@ -1,14 +1,38 @@
-import {useParams, useSearchParams} from "react-router-dom";
+import {NavLink, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import {useQuery} from "@apollo/client";
 import {gql} from "../../graphql";
 import React, {useCallback, useEffect} from "react";
 import {navigationActions} from "../../store/navigation";
 import {useAppDispatch} from "../../store/root";
 import {GetMapQuery, MapEntryFormat, Program} from "../../graphql/graphql";
-import {Box, Button, Flash, Pagehead, Pagination, Select, Spinner, TreeView} from "@primer/react";
+import {
+  ActionList,
+  ActionMenu,
+  Box,
+  Button,
+  Flash, IconButton,
+  Link,
+  Pagehead,
+  Pagination,
+  SegmentedControl,
+  Select,
+  Spinner, sx,
+  TreeView
+} from "@primer/react";
 import {ProgramNavItem} from "../../navigation/navigation";
 import "./style.css";
 import {useSearchParamsState} from "../../utils/searchParamHook";
+import {
+  EyeIcon,
+  FileCodeIcon,
+  KebabHorizontalIcon,
+  NumberIcon,
+  PencilIcon,
+  PeopleIcon,
+  ServerIcon, TypographyIcon
+} from "@primer/octicons-react";
+import {mapEntriesLink, mapOverviewLink} from "../../navigation/links";
+import styled from "styled-components";
 
 
 const GQL_MAP_QUERY = gql(/* GraphQL */ `
@@ -53,7 +77,7 @@ const GQL_MAP_QUERY_ENTRIES = gql(/* GraphQL */ `
     }
 `);
 
-function MapPageContent({map: {
+function MapPage_Overview({map: {
     flags, id, isPinned, keySize, maxEntries,
     name, programs, type, valueSize, entriesCount,
     isPerCPU, isLookupSupported
@@ -64,44 +88,7 @@ function MapPageContent({map: {
     p: 1,
   }
 
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const [showEntries, setShowEntries] = useSearchParamsState('show_entries', false, strValue => strValue === 'true');
-  const [keyFormat, setKeyFormat] = useSearchParamsState('fkey', MapEntryFormat.Hex, strValue => strValue as MapEntryFormat);
-  const [valueFormat, setValueFormat] = useSearchParamsState('fvalue', MapEntryFormat.Hex, strValue => strValue as MapEntryFormat);
-
-  const [page, setPage] = useSearchParamsState('page', 1, strValue => parseInt(strValue));
-
-  const toggleShowEntries = useCallback(() => {
-    if (showEntries) {
-      setShowEntries('false')
-    } else {
-      setShowEntries('true')
-    }
-  }, [setShowEntries]);
-
-  const pageSize = 32;
-
-  const {loading, error, data} = useQuery(GQL_MAP_QUERY_ENTRIES, {
-    variables: {
-      mapId: id,
-      offset: (page - 1) * pageSize,
-      limit: pageSize,
-      keyFormat: keyFormat,
-      valueFormat: valueFormat,
-    },
-    skip: !showEntries
-  });
-
-  const mapEntries = data?.map.entries || [];
-  const mapEntriesCount = data?.map.entriesCount || 0;
-
-  const pageCount = Math.ceil(mapEntriesCount / pageSize);
-
-  const cpus = !isPerCPU ? 1 : Math.max(mapEntries[0]?.cpuValues?.length || 1, 1);
-
-  return <div>
-    <Pagehead><b>{name || <i>unnamed</i>}</b> <sup>id {id}</sup></Pagehead>
+  return <>
     <Box sx={{display: 'flex'}}>
       <Box sx={propsBoxProps}>
         <h3>Type</h3>
@@ -123,79 +110,8 @@ function MapPageContent({map: {
         <pre>{isPinned ? 'yes' : 'no'}</pre>
       </Box>
     </Box>
-
-    {!isLookupSupported ? null :
-      <div>
-        <Box sx={{display: 'flex'}}>
-          <Box>
-            <h2>Entries </h2>
-          </Box>
-          <Box>
-            <Button onClick={() => toggleShowEntries()}>{showEntries ? 'Hide' : 'Show'} entries</Button>
-          </Box>
-        </Box>
-
-        {!showEntries ? null : (
-          loading ? <p>Loading...</p> :
-            error ? <p>Error: {error.message}</p> :
-              <>
-                Total entries: {mapEntriesCount}
-                <table className={'map-entries'}>
-                  <thead>
-                    <tr>
-                      <td rowSpan={cpus > 1 ? 2 : 1}>
-                        <span>Key</span>
-                        <span style={{float: 'right'}}>
-                          <Select style={{width: '100px'}}
-                            onChange={(event) => setKeyFormat(event.target.value as MapEntryFormat)}
-                          >
-                            <Select.Option value={MapEntryFormat.Hex} selected={keyFormat == MapEntryFormat.Hex}>HEX</Select.Option>
-                            <Select.Option value={MapEntryFormat.String} selected={keyFormat == MapEntryFormat.String}>String</Select.Option>
-                            <Select.Option value={MapEntryFormat.Number} selected={keyFormat == MapEntryFormat.Number}>Number</Select.Option>
-                          </Select>
-                        </span>
-                      </td>
-                      <td colSpan={cpus}>
-                        <span>Value</span>
-                        <span style={{float: 'right'}}>
-                          <Select style={{width: '100px'}}
-                            onChange={(event) => setValueFormat(event.target.value as MapEntryFormat)}
-                          >
-                            <Select.Option value={MapEntryFormat.Hex} selected={valueFormat == MapEntryFormat.Hex}>HEX</Select.Option>
-                            <Select.Option value={MapEntryFormat.String} selected={valueFormat == MapEntryFormat.String}>String</Select.Option>
-                            <Select.Option value={MapEntryFormat.Number} selected={valueFormat == MapEntryFormat.Number}>Number</Select.Option>
-                          </Select>
-                        </span>
-                      </td>
-                    </tr>
-                    {cpus <= 1 ? null :
-                      <tr>
-                        {Array(cpus).fill(0).map((_, i) => <td key={i}>{i}</td>)}
-                      </tr>
-                    }
-                  </thead>
-                  <tbody>
-                    {mapEntries.map((e, i) => (
-                      <tr key={i}>
-                        <td>{e.key}</td>
-                        {cpus <= 1 ? <td>{e.value}</td> :
-                          Array(cpus).fill(0).map((_, i) => <td key={i}>{e.cpuValues[i] || 'n/a'}</td>)
-                        }
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <Pagination pageCount={pageCount} currentPage={page}
-                            onPageChange={(e, pageNum) => {
-                                            setPage(pageNum.toString());
-                                            e.preventDefault()
-                                          }} />
-              </>
-        )}
-      </div>
-    }
     <div>
-      <h2>Bounded to programs:</h2>
+      <h3>Programs using this map</h3>
       {
         programs.length == 0 ? <p>No programs</p> :
           <TreeView>
@@ -203,10 +119,128 @@ function MapPageContent({map: {
           </TreeView>
       }
     </div>
-  </div>
+  </>
 }
 
-export function MapPage() {
+function MapPage_Entries({map: {
+  flags, id, isPinned, keySize, maxEntries,
+  name, programs, type, valueSize, entriesCount,
+  isPerCPU, isLookupSupported
+}}: { map: GetMapQuery["map"] }) {
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const defaultValueFormat = (valueSize || 0) <= 8 ? MapEntryFormat.Number : MapEntryFormat.Hex;
+
+  const [keyFormat, setKeyFormat] = useSearchParamsState('fkey', MapEntryFormat.Hex, strValue => strValue as MapEntryFormat);
+  const [valueFormat, setValueFormat] = useSearchParamsState('fvalue', defaultValueFormat, strValue => strValue as MapEntryFormat);
+
+  const [page, setPage] = useSearchParamsState('page', 1, strValue => parseInt(strValue));
+
+
+  const pageSize = 25;
+
+  const {loading, error, data} = useQuery(GQL_MAP_QUERY_ENTRIES, {
+    variables: {
+      mapId: id,
+      offset: (page - 1) * pageSize,
+      limit: pageSize,
+      keyFormat: keyFormat,
+      valueFormat: valueFormat,
+    },
+  });
+
+  const mapEntries = data?.map.entries || [];
+  const mapEntriesCount = data?.map.entriesCount || 0;
+
+  const pageCount = Math.ceil(mapEntriesCount / pageSize);
+
+  const cpus = !isPerCPU ? 1 : Math.max(mapEntries[0]?.cpuValues?.length || 1, 1);
+
+  const formatIcons = {
+    [MapEntryFormat.Hex]: FileCodeIcon,
+    [MapEntryFormat.Number]: NumberIcon,
+    [MapEntryFormat.String]: TypographyIcon,
+  }
+
+  return !isLookupSupported
+    ? <>Lookup is not implemented for map type <b>{type}</b></>
+    :
+    <div>
+      {
+        loading ? <p>Loading...</p> :
+          error ? <p>Error: {error.message}</p> :
+            <>
+              Total entries: {mapEntriesCount}
+              <div className={'map-entries-wrapper'}>
+                <table className={'map-entries'}>
+                  <thead>
+                  <tr>
+                    <td rowSpan={cpus > 1 ? 2 : 1}>
+                      <ActionMenu>
+                        <ActionMenu.Button aria-label="Select key format" leadingIcon={formatIcons[keyFormat]}>KEY</ActionMenu.Button>
+                        <ActionMenu.Overlay>
+                          <ActionList>
+                            {[MapEntryFormat.Hex, MapEntryFormat.Number, MapEntryFormat.String].map((format) =>
+                              <ActionList.Item key={format} onClick={() => setKeyFormat(format)}>
+                                <ActionList.LeadingVisual>
+                                  {React.createElement(formatIcons[format])}
+                                </ActionList.LeadingVisual>
+                                {format.toLowerCase()}
+                              </ActionList.Item>
+                            )}
+                          </ActionList>
+                        </ActionMenu.Overlay>
+                      </ActionMenu>
+                    </td>
+                    <td colSpan={cpus}>
+                      <ActionMenu>
+                        <ActionMenu.Button aria-label="Select value format" leadingIcon={formatIcons[valueFormat]}>VALUE</ActionMenu.Button>
+                        <ActionMenu.Overlay>
+                          <ActionList>
+                            {[MapEntryFormat.Hex, MapEntryFormat.Number, MapEntryFormat.String].map((format) =>
+                              <ActionList.Item key={format} onClick={() => setValueFormat(format)}>
+                                <ActionList.LeadingVisual>
+                                  {React.createElement(formatIcons[format])}
+                                </ActionList.LeadingVisual>
+                                {format.toLowerCase()}
+                              </ActionList.Item>
+                            )}
+                          </ActionList>
+                        </ActionMenu.Overlay>
+                      </ActionMenu>
+                    </td>
+                  </tr>
+                  {cpus <= 1 ? null :
+                    <tr className={'cpu-heads'}>
+                      {Array(cpus).fill(0).map((_, i) => <td key={i}>{i}</td>)}
+                    </tr>
+                  }
+                  </thead>
+                  <tbody>
+                  {mapEntries.map((e, i) => (
+                    <tr key={i}>
+                      <td>{e.key}</td>
+                      {cpus <= 1 ? <td>{e.value}</td> :
+                        Array(cpus).fill(0).map((_, i) => <td key={i}>{e.cpuValues[i] || 'n/a'}</td>)
+                      }
+                    </tr>
+                  ))}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination pageCount={pageCount} currentPage={page}
+                          onPageChange={(e, pageNum) => {
+                            setPage(pageNum.toString());
+                            e.preventDefault()
+                          }} />
+            </>
+      }
+    </div>
+}
+
+export function MapPage({section}: {section?: string}) {
+
   const dispatch = useAppDispatch();
   const {mapId} = useParams();
   const {loading, error, data} = useQuery(GQL_MAP_QUERY, {
@@ -214,6 +248,8 @@ export function MapPage() {
       mapId: mapId ? parseInt(mapId) : 0
     }
   });
+
+  const navigate = useNavigate();
 
   // send notification on mount
   useEffect(() => {
@@ -232,6 +268,27 @@ export function MapPage() {
   return (
     loading ? <Spinner size="large" /> :
       error ? <Flash variant="danger">{error.message}</Flash> :
-              <MapPageContent map={data!.map}/>
+              <div>
+                <Pagehead>
+                  <b>{data!.map.name || <i>unnamed</i>}</b> <sup>id {data!.map.id}</sup>
+                  <span style={{marginLeft: '10px'}} />
+                  <SegmentedControl aria-label="File view">
+                    <SegmentedControl.Button
+                      selected={section !== 'entries'}
+                      onClick={() => navigate(mapOverviewLink(data!.map.id))}
+                      leadingIcon={EyeIcon}>&nbsp;Overview</SegmentedControl.Button>
+                    <SegmentedControl.Button
+                      selected={section === 'entries'}
+                      onClick={() => navigate(mapEntriesLink(data!.map.id))}
+                      leadingIcon={ServerIcon}>&nbsp;Entries
+                    </SegmentedControl.Button>
+                  </SegmentedControl>
+                </Pagehead>
+                {
+                  section === 'entries'
+                    ? <MapPage_Entries map={data!.map} />
+                    : <MapPage_Overview map={data!.map} />
+                }
+              </div>
   );
 }

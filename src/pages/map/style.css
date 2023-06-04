@@ -1,5 +1,9 @@
+.map-entries-wrapper {
+    overflow: scroll;
+}
+
 .map-entries {
-    border: 1px solid lightgrey;
+    border: 1px solid #f6f6f6;
 }
 
 .map-entries tbody td {
@@ -10,4 +14,24 @@
 /* make rows alternate colors */
 .map-entries tbody tr:nth-child(even) {
     background-color: #f6f6f6;
+}
+
+.map-entries thead > tr:first-child > td:first-child,
+.map-entries tbody > tr > td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #eee;
+}
+
+.map-entries thead {
+    background: #eee;
+}
+
+.map-entries tbody td {
+    text-align: right;
+}
+
+.map-entries > thead > tr.cpu-heads > td {
+    text-align: center;
 }

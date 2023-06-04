@@ -1,49 +1,14 @@
 import {Header, PageLayout, TreeView} from '@primer/react';
-import React, {useState} from 'react';
-import {useQuery} from "@apollo/client";
-import {gql} from "../graphql";
+import React from 'react';
 import {Outlet} from "react-router-dom";
-import {MapNavItem, ProgramNavItem} from "../navigation/navigation";
 import {MarkGithubIcon} from "@primer/octicons-react";
+import {Sidebar} from "../navigation/sidebar";
 
-const GQL_QUERY_NAVIGATION = gql(/* GraphQL */ `
-    query Navigation {
-        programs {
-            id
-            error
-            name
-            type
-            tag
-            runTime
-            runCount
-            btfId
-        }
-        maps{
-            id
-            error
-            name
-            type
-            flags
-            isPinned
-            keySize
-            valueSize
-            maxEntries
-        }
-    }
-`);
 
 function App() {
 
-  const [mapsOpened, setMapsOpened] = useState(true);
-  const [progsOpened, setProgsOpened] = useState(true);
-
-  const {loading, error, data} = useQuery(GQL_QUERY_NAVIGATION, {
-    pollInterval: 500
-  });
-  console.log(data, loading, error);
-
   return (
-    <PageLayout>
+    <PageLayout containerWidth={'full'} padding={'none'} rowGap={"none"}>
       <PageLayout.Header>
         <Header>
           <Header.Item>
@@ -59,33 +24,8 @@ function App() {
           </Header.Item>
         </Header>
       </PageLayout.Header>
-      <PageLayout.Pane position="start">
-        <nav aria-label="Files">
-          <TreeView aria-label="Files">
-            <TreeView.Item id="maps" expanded={mapsOpened} onExpandedChange={setMapsOpened}>
-              <TreeView.LeadingVisual>
-                <TreeView.DirectoryIcon/>
-              </TreeView.LeadingVisual>
-              Maps
-              <TreeView.SubTree state={loading ? 'loading' : 'done'}>
-                {data?.maps && (
-                  data.maps.map((map: any) => <MapNavItem key={map.id} map={map} highlight={true} />)
-                )}
-              </TreeView.SubTree>
-            </TreeView.Item>
-            <TreeView.Item id="progs" expanded={progsOpened} onExpandedChange={setProgsOpened}>
-              <TreeView.LeadingVisual>
-                <TreeView.DirectoryIcon/>
-              </TreeView.LeadingVisual>
-              Programs
-              <TreeView.SubTree state={loading ? 'loading' : 'done'}>
-                {data?.programs && (
-                  data.programs.map((prog: any) => <ProgramNavItem key={prog.id} prog={prog} highlight={true} />)
-                )}
-              </TreeView.SubTree>
-            </TreeView.Item>
-          </TreeView>
-        </nav>
+      <PageLayout.Pane position="start" padding={'normal'} positionWhenNarrow={'end'}>
+        <Sidebar />
       </PageLayout.Pane>
       <PageLayout.Content>
         <Outlet/>

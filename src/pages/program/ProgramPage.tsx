@@ -7,6 +7,7 @@ import {useAppDispatch} from "../../store/root";
 import {GetProgramQuery} from "../../graphql/graphql";
 import {Box, Flash, Pagehead, Spinner, TreeView} from "@primer/react";
 import {MapNavItem} from "../../navigation/navigation";
+import {formatSeconds} from "./duration";
 
 const GQL_PROGRAM_QUERY = gql(/* GraphQL */ `
     query GetProgram($programId: Int!) {
@@ -52,15 +53,16 @@ function ProgramPageContent({program: {id, name, type, tag, runTime, runCount, b
         <pre>{tag}</pre>
       </Property>
       <Property name="Metrics">
-        <pre>Run time: {runTime} ns</pre>
+        <pre>Run time: {formatSeconds(runTime || 0)}</pre>
         <pre>Run count: {runCount}</pre>
+        <pre>Avg. time per run: {formatSeconds((runTime || 0) / (runCount || 1))}</pre>
       </Property>
       <Property name="BTF">
         <pre>{btfId}</pre>
       </Property>
     </Box>
     <div>
-      <h2>Bounded maps</h2>
+      <h3>Used maps</h3>
       {
         maps.length == 0 ? <p>No maps</p> :
           <TreeView>
@@ -87,12 +89,13 @@ export function ProgramPage() {
         maps: data.program.maps.map((m: any) => m.id as number)
       }));
     }
+
     return () => {
       dispatch(navigationActions.highlightMaps({
         maps: []
       }));
     }
-  });
+  }, [dispatch, data]);
 
   return (
     loading ? <Spinner size="large" /> :
