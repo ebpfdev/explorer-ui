@@ -1,7 +1,7 @@
-import {NavLink, useNavigate, useParams, useSearchParams} from "react-router-dom";
+import {useNavigate, useParams, useSearchParams} from "react-router-dom";
 import {useQuery} from "@apollo/client";
 import {gql} from "../../graphql";
-import React, {useCallback, useEffect} from "react";
+import React, {useEffect} from "react";
 import {navigationActions} from "../../store/navigation";
 import {useAppDispatch} from "../../store/root";
 import {GetMapQuery, MapEntryFormat, Program} from "../../graphql/graphql";
@@ -9,15 +9,10 @@ import {
   ActionList,
   ActionMenu,
   Box,
-  Button,
-  Flash, IconButton,
-  Link,
-  Pagehead,
+  Flash, Pagehead,
   Pagination,
   SegmentedControl,
-  Select,
-  Spinner, sx,
-  TreeView
+  Spinner, TreeView
 } from "@primer/react";
 import {ProgramNavItem} from "../../navigation/navigation";
 import "./style.css";
@@ -25,14 +20,10 @@ import {useSearchParamsState} from "../../utils/searchParamHook";
 import {
   EyeIcon,
   FileCodeIcon,
-  KebabHorizontalIcon,
   NumberIcon,
-  PencilIcon,
-  PeopleIcon,
   ServerIcon, TypographyIcon
 } from "@primer/octicons-react";
 import {mapEntriesLink, mapOverviewLink} from "../../navigation/links";
-import styled from "styled-components";
 
 
 const GQL_MAP_QUERY = gql(/* GraphQL */ `
@@ -98,7 +89,8 @@ function MapPage_Overview({map: {
         <h3>Size</h3>
         <pre>Key: {keySize} bytes</pre>
         <pre>Value: {valueSize} bytes</pre>
-        <pre>Entries: {entriesCount} / {maxEntries}</pre>
+        {!isLookupSupported ? null :
+          <pre>Entries: {entriesCount} / {maxEntries}</pre>}
         <pre>Max space: {(keySize!+valueSize!)*maxEntries!} bytes</pre>
       </Box>
       <Box sx={propsBoxProps}>
@@ -153,7 +145,7 @@ function MapPage_Entries({map: {
   const mapEntries = data?.map.entries || [];
   const mapEntriesCount = data?.map.entriesCount || 0;
 
-  const pageCount = Math.ceil(mapEntriesCount / pageSize);
+  const pageCount = Math.max(1, Math.ceil(mapEntriesCount / pageSize));
 
   const cpus = !isPerCPU ? 1 : Math.max(mapEntries[0]?.cpuValues?.length || 1, 1);
 

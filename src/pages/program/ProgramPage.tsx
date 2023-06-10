@@ -4,10 +4,11 @@ import {gql} from "../../graphql";
 import React, {useCallback, useEffect} from "react";
 import {navigationActions} from "../../store/navigation";
 import {useAppDispatch} from "../../store/root";
-import {GetProgramQuery} from "../../graphql/graphql";
+import {GetProgramQuery, Task} from "../../graphql/graphql";
 import {Box, Flash, Pagehead, Spinner, TreeView} from "@primer/react";
 import {MapNavItem} from "../../navigation/navigation";
 import {formatSeconds} from "./duration";
+import {DataTable, Table} from "@primer/react/drafts";
 
 const GQL_PROGRAM_QUERY = gql(/* GraphQL */ `
     query GetProgram($programId: Int!) {
@@ -25,11 +26,19 @@ const GQL_PROGRAM_QUERY = gql(/* GraphQL */ `
                 type
             }
             error
+            tasks {
+                pid
+                fd
+                type
+                name
+                probeOffset
+                probeAddr
+            }
         }
     }
 `);
 
-function ProgramPageContent({program: {id, name, type, tag, runTime, runCount, btfId, maps}}: {
+function ProgramPageContent({program: {id, name, type, tag, runTime, runCount, btfId, maps, tasks}}: {
   program: GetProgramQuery['program']
 }) {
   const propsBoxProps = {
@@ -61,6 +70,44 @@ function ProgramPageContent({program: {id, name, type, tag, runTime, runCount, b
         <pre>{btfId}</pre>
       </Property>
     </Box>
+    <div>
+      <h3>Attachments</h3>
+      {
+        tasks.length == 0 ? <p>No attachments</p> :
+          <Table.Container>
+            <DataTable
+              data={tasks.map((t: Task) => ({...t, id: t.pid + '/' + t.fd}))}
+              columns={[
+                {
+                  header: 'Process ID',
+                  field: 'pid',
+                },
+                {
+                  header: 'File descriptor',
+                  field: 'fd',
+                },
+                {
+                  header: 'Type',
+                  field: 'type',
+                },
+                {
+                  header: 'Function / File',
+                  field: 'name',
+                },
+                {
+                  header: 'Probe offset',
+                  field: 'probeOffset',
+                  renderCell: (t: Task) => <pre>{t.probeOffset}</pre>
+                },
+                {
+                  header: 'Probe address',
+                  field: 'probeAddr',
+                  renderCell: (t: Task) => <pre>{t.probeAddr}</pre>
+                },
+              ]} />
+          </Table.Container>
+      }
+    </div>
     <div>
       <h3>Used maps</h3>
       {

@@ -1,6 +1,6 @@
 import React from "react";
 import {RootState, useAppSelector} from "../store/root";
-import {NavLink, useMatch, useNavigate, useResolvedPath} from "react-router-dom";
+import {NavLink, useNavigate} from "react-router-dom";
 import {mapOverviewLink, programLink} from "./links";
 import {StyledOcticon, TreeView} from "@primer/react";
 import {ArrowSwitchIcon, FileBinaryIcon, InboxIcon, VersionsIcon} from "@primer/octicons-react";
@@ -51,7 +51,10 @@ export function MapNavItem({map, highlight} : {map: Pick<EMap, 'id' | 'name' | '
           id={map.id.toString()} key={map.id}
           aria-current={isActive ? 'page' : undefined}
           current={isActive}
-          onSelect={() => navigate(link)}
+          onSelect={() => {
+            console.log("Navigating to " + link);
+            navigate(link)
+          }}
         >
           <TreeView.LeadingVisual>
             {
