@@ -1,4 +1,11 @@
+v0.0.3 // 11 june 2023 / more connections
+--
+
+* (feature) new Graph View for exploring connected programs and maps (available from details page of both)
+* (feature) showing list of tracepoints that program is attached to on program's details page
+
 v0.0.2 // 4 june 2023 / neat fixes
+--
 
 * layout now take all screen space
 * sidebar
