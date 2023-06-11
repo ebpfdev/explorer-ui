@@ -14,6 +14,17 @@ export type Scalars = {
   Float: number;
 };
 
+export type ConnectedGraph = {
+  __typename?: 'ConnectedGraph';
+  maps: Array<Map>;
+  programs: Array<Program>;
+};
+
+export enum IdType {
+  Map = 'MAP',
+  Program = 'PROGRAM'
+}
+
 export type Map = {
   __typename?: 'Map';
   entries: Array<MapEntry>;
@@ -71,10 +82,17 @@ export type Program = {
 
 export type Query = {
   __typename?: 'Query';
+  connectedGraph: ConnectedGraph;
   map: Map;
   maps: Array<Map>;
   program: Program;
   programs: Array<Program>;
+};
+
+
+export type QueryConnectedGraphArgs = {
+  from: Scalars['Int'];
+  fromType: IdType;
 };
 
 
@@ -97,17 +115,18 @@ export type Task = {
   type: Scalars['String'];
 };
 
+export type ConnectedGraphQueryVariables = Exact<{
+  id: Scalars['Int'];
+  type: IdType;
+}>;
+
+
+export type ConnectedGraphQuery = { __typename?: 'Query', connectedGraph: { __typename?: 'ConnectedGraph', programs: Array<{ __typename?: 'Program', id: number, type: string, name?: string | null, maps: Array<{ __typename?: 'Map', id: number }> }>, maps: Array<{ __typename?: 'Map', id: number, type: string, name?: string | null }> } };
+
 export type NavigationQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type NavigationQuery = { __typename?: 'Query', programs: Array<{ __typename?: 'Program', id: number, error?: string | null, name?: string | null, type: string, tag?: string | null, runTime?: number | null, runCount?: number | null, btfId?: number | null }>, maps: Array<{ __typename?: 'Map', id: number, error?: string | null, name?: string | null, type: string, flags?: number | null, isPinned?: boolean | null, keySize?: number | null, valueSize?: number | null, maxEntries?: number | null }> };
-
-export type GetMapQueryVariables = Exact<{
-  mapId: Scalars['Int'];
-}>;
-
-
-export type GetMapQuery = { __typename?: 'Query', map: { __typename?: 'Map', id: number, error?: string | null, name?: string | null, type: string, flags?: number | null, isPinned?: boolean | null, keySize?: number | null, valueSize?: number | null, maxEntries?: number | null, entriesCount: number, isPerCPU: boolean, isLookupSupported: boolean, programs: Array<{ __typename?: 'Program', id: number, name?: string | null, type: string }> } };
 
 export type GetMapEntriesQueryVariables = Exact<{
   mapId: Scalars['Int'];
@@ -120,6 +139,13 @@ export type GetMapEntriesQueryVariables = Exact<{
 
 export type GetMapEntriesQuery = { __typename?: 'Query', map: { __typename?: 'Map', isPerCPU: boolean, entriesCount: number, entries: Array<{ __typename?: 'MapEntry', key: string, value?: string | null, cpuValues: Array<string> }> } };
 
+export type GetMapQueryVariables = Exact<{
+  mapId: Scalars['Int'];
+}>;
+
+
+export type GetMapQuery = { __typename?: 'Query', map: { __typename?: 'Map', id: number, error?: string | null, name?: string | null, type: string, flags?: number | null, isPinned?: boolean | null, keySize?: number | null, valueSize?: number | null, maxEntries?: number | null, entriesCount: number, isPerCPU: boolean, isLookupSupported: boolean, programs: Array<{ __typename?: 'Program', id: number, name?: string | null, type: string }> } };
+
 export type GetProgramQueryVariables = Exact<{
   programId: Scalars['Int'];
 }>;
@@ -128,7 +154,8 @@ export type GetProgramQueryVariables = Exact<{
 export type GetProgramQuery = { __typename?: 'Query', program: { __typename?: 'Program', id: number, name?: string | null, type: string, tag?: string | null, runTime?: number | null, runCount?: number | null, btfId?: number | null, error?: string | null, maps: Array<{ __typename?: 'Map', id: number, name?: string | null, type: string }>, tasks: Array<{ __typename?: 'Task', pid: number, fd: number, type: string, name?: string | null, probeOffset?: string | null, probeAddr?: string | null }> } };
 
 
+export const ConnectedGraphDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ConnectedGraph"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"type"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"IdType"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"connectedGraph"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"from"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"fromType"},"value":{"kind":"Variable","name":{"kind":"Name","value":"type"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"programs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ConnectedGraphQuery, ConnectedGraphQueryVariables>;
 export const NavigationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Navigation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"programs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"tag"}},{"kind":"Field","name":{"kind":"Name","value":"runTime"}},{"kind":"Field","name":{"kind":"Name","value":"runCount"}},{"kind":"Field","name":{"kind":"Name","value":"btfId"}}]}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"flags"}},{"kind":"Field","name":{"kind":"Name","value":"isPinned"}},{"kind":"Field","name":{"kind":"Name","value":"keySize"}},{"kind":"Field","name":{"kind":"Name","value":"valueSize"}},{"kind":"Field","name":{"kind":"Name","value":"maxEntries"}}]}}]}}]} as unknown as DocumentNode<NavigationQuery, NavigationQueryVariables>;
-export const GetMapDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMap"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"map"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"flags"}},{"kind":"Field","name":{"kind":"Name","value":"isPinned"}},{"kind":"Field","name":{"kind":"Name","value":"keySize"}},{"kind":"Field","name":{"kind":"Name","value":"valueSize"}},{"kind":"Field","name":{"kind":"Name","value":"maxEntries"}},{"kind":"Field","name":{"kind":"Name","value":"entriesCount"}},{"kind":"Field","name":{"kind":"Name","value":"isPerCPU"}},{"kind":"Field","name":{"kind":"Name","value":"isLookupSupported"}},{"kind":"Field","name":{"kind":"Name","value":"programs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}}]}}]} as unknown as DocumentNode<GetMapQuery, GetMapQueryVariables>;
 export const GetMapEntriesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMapEntries"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"keyFormat"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapEntryFormat"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"valueFormat"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapEntryFormat"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"map"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isPerCPU"}},{"kind":"Field","name":{"kind":"Name","value":"entries"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"keyFormat"},"value":{"kind":"Variable","name":{"kind":"Name","value":"keyFormat"}}},{"kind":"Argument","name":{"kind":"Name","value":"valueFormat"},"value":{"kind":"Variable","name":{"kind":"Name","value":"valueFormat"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"cpuValues"}}]}},{"kind":"Field","name":{"kind":"Name","value":"entriesCount"}}]}}]}}]} as unknown as DocumentNode<GetMapEntriesQuery, GetMapEntriesQueryVariables>;
+export const GetMapDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMap"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"map"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"flags"}},{"kind":"Field","name":{"kind":"Name","value":"isPinned"}},{"kind":"Field","name":{"kind":"Name","value":"keySize"}},{"kind":"Field","name":{"kind":"Name","value":"valueSize"}},{"kind":"Field","name":{"kind":"Name","value":"maxEntries"}},{"kind":"Field","name":{"kind":"Name","value":"entriesCount"}},{"kind":"Field","name":{"kind":"Name","value":"isPerCPU"}},{"kind":"Field","name":{"kind":"Name","value":"isLookupSupported"}},{"kind":"Field","name":{"kind":"Name","value":"programs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}}]}}]} as unknown as DocumentNode<GetMapQuery, GetMapQueryVariables>;
 export const GetProgramDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetProgram"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"programId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"program"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"programId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"tag"}},{"kind":"Field","name":{"kind":"Name","value":"runTime"}},{"kind":"Field","name":{"kind":"Name","value":"runCount"}},{"kind":"Field","name":{"kind":"Name","value":"btfId"}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"tasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pid"}},{"kind":"Field","name":{"kind":"Name","value":"fd"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"probeOffset"}},{"kind":"Field","name":{"kind":"Name","value":"probeAddr"}}]}}]}}]}}]} as unknown as DocumentNode<GetProgramQuery, GetProgramQueryVariables>;

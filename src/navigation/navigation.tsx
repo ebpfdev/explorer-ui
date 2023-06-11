@@ -1,7 +1,7 @@
 import React from "react";
 import {RootState, useAppSelector} from "../store/root";
 import {NavLink, useNavigate} from "react-router-dom";
-import {mapOverviewLink, programLink} from "./links";
+import {mapOverviewLink, programOverviewLink} from "./links";
 import {StyledOcticon, TreeView} from "@primer/react";
 import {ArrowSwitchIcon, FileBinaryIcon, InboxIcon, VersionsIcon} from "@primer/octicons-react";
 import {Map as EMap, Program} from "../graphql/graphql";
@@ -12,7 +12,7 @@ export function ProgramNavItem({prog, highlight} : {prog: Pick<Program, 'id' | '
   const highlightedProgs = useAppSelector((state: RootState) => state.navigation.highlightedProgs);
 
   const navigate = useNavigate();
-  const link = programLink(prog.id);
+  const link = programOverviewLink(prog.id);
 
   return (
     <NavLink to={link} style={{textDecoration: 'none'}}>

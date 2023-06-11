@@ -1,4 +1,4 @@
-import {Header, PageLayout, TreeView} from '@primer/react';
+import {Header, PageLayout} from '@primer/react';
 import React from 'react';
 import {Outlet} from "react-router-dom";
 import {MarkGithubIcon} from "@primer/octicons-react";

@@ -21,6 +21,10 @@ const router = createBrowserRouter([
         element: <ProgramPage />,
       },
       {
+        path: "program/:programId/graph",
+        element: <ProgramPage section={'graph'}/>,
+      },
+      {
         path: "map/:mapId",
         element: <MapPage />,
       },
@@ -28,6 +32,10 @@ const router = createBrowserRouter([
         path: "map/:mapId/entries",
         element: <MapPage section={'entries'}/>,
       },
+      {
+        path: "map/:mapId/graph",
+        element: <MapPage section={'graph'}/>,
+      }
     ],
   }
 ]);

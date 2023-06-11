@@ -6,29 +6,29 @@ import {useQuery} from "@apollo/client";
 
 
 const GQL_QUERY_NAVIGATION = gql(/* GraphQL */ `
-    query Navigation {
-        programs {
-            id
-            error
-            name
-            type
-            tag
-            runTime
-            runCount
-            btfId
-        }
-        maps{
-            id
-            error
-            name
-            type
-            flags
-            isPinned
-            keySize
-            valueSize
-            maxEntries
-        }
+  query Navigation {
+    programs {
+      id
+      error
+      name
+      type
+      tag
+      runTime
+      runCount
+      btfId
     }
+    maps{
+      id
+      error
+      name
+      type
+      flags
+      isPinned
+      keySize
+      valueSize
+      maxEntries
+    }
+  }
 `);
 
 export function Sidebar() {
@@ -38,6 +38,26 @@ export function Sidebar() {
   const {loading, error, data} = useQuery(GQL_QUERY_NAVIGATION, {
     pollInterval: 500
   });
+
+  if (loading) return (
+    <TreeView>
+      <TreeView.Item id="loading">
+        <TreeView.LeadingVisual>
+          <TreeView.DirectoryIcon/>
+        </TreeView.LeadingVisual>
+        Loading...
+      </TreeView.Item>
+    </TreeView>);
+
+  if (error) return (
+    <TreeView>
+      <TreeView.Item id="error">
+        <TreeView.LeadingVisual>
+          <TreeView.DirectoryIcon/>
+        </TreeView.LeadingVisual>
+        Error: {error.message}
+      </TreeView.Item>
+    </TreeView>);
 
   return <nav aria-label="Files">
     <TreeView aria-label="Files">
