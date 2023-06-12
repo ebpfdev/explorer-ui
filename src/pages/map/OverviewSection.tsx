@@ -5,7 +5,7 @@ import React from "react";
 
 
 export function OverviewSection({map: {
-  flags, isPinned, keySize, maxEntries,
+  flags, isPinned, pins, keySize, maxEntries,
   programs, type, valueSize, entriesCount,
   isLookupSupported
 }}: { map: GetMapQuery["map"] }) {
@@ -38,6 +38,14 @@ export function OverviewSection({map: {
         <pre>{isPinned ? 'yes' : 'no'}</pre>
       </Box>
     </Box>
+    {!isPinned ? null :
+      <div>
+        <h3>Pins</h3>
+        <ul>
+          {(pins || []).map((p) => <li key={p}><pre>{p}</pre></li>)}
+        </ul>
+      </div>
+    }
     <div>
       <h3>Programs using this map</h3>
       {

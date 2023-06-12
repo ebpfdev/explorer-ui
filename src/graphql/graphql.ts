@@ -34,10 +34,11 @@ export type Map = {
   id: Scalars['Int'];
   isLookupSupported: Scalars['Boolean'];
   isPerCPU: Scalars['Boolean'];
-  isPinned?: Maybe<Scalars['Boolean']>;
+  isPinned: Scalars['Boolean'];
   keySize?: Maybe<Scalars['Int']>;
   maxEntries?: Maybe<Scalars['Int']>;
   name?: Maybe<Scalars['String']>;
+  pins?: Maybe<Array<Scalars['String']>>;
   programs: Array<Program>;
   type: Scalars['String'];
   valueSize?: Maybe<Scalars['Int']>;
@@ -63,6 +64,38 @@ export enum MapEntryFormat {
   Number = 'NUMBER',
   String = 'STRING'
 }
+
+export type MapPinningResult = {
+  __typename?: 'MapPinningResult';
+  error?: Maybe<Scalars['String']>;
+};
+
+export type MapUpdateValueResult = {
+  __typename?: 'MapUpdateValueResult';
+  error?: Maybe<Scalars['String']>;
+};
+
+export type Mutation = {
+  __typename?: 'Mutation';
+  pinMap?: Maybe<MapPinningResult>;
+  updateMapValue?: Maybe<MapUpdateValueResult>;
+};
+
+
+export type MutationPinMapArgs = {
+  id: Scalars['Int'];
+  path: Scalars['String'];
+};
+
+
+export type MutationUpdateMapValueArgs = {
+  cpu?: InputMaybe<Scalars['Int']>;
+  key: Scalars['String'];
+  keyFormat: MapEntryFormat;
+  mapId: Scalars['Int'];
+  value: Scalars['String'];
+  valueFormat: MapEntryFormat;
+};
 
 export type Program = {
   __typename?: 'Program';
@@ -126,7 +159,7 @@ export type ConnectedGraphQuery = { __typename?: 'Query', connectedGraph: { __ty
 export type NavigationQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type NavigationQuery = { __typename?: 'Query', programs: Array<{ __typename?: 'Program', id: number, error?: string | null, name?: string | null, type: string, tag?: string | null, runTime?: number | null, runCount?: number | null, btfId?: number | null }>, maps: Array<{ __typename?: 'Map', id: number, error?: string | null, name?: string | null, type: string, flags?: number | null, isPinned?: boolean | null, keySize?: number | null, valueSize?: number | null, maxEntries?: number | null }> };
+export type NavigationQuery = { __typename?: 'Query', programs: Array<{ __typename?: 'Program', id: number, error?: string | null, name?: string | null, type: string, tag?: string | null, runTime?: number | null, runCount?: number | null, btfId?: number | null }>, maps: Array<{ __typename?: 'Map', id: number, error?: string | null, name?: string | null, type: string, flags?: number | null, isPinned: boolean, keySize?: number | null, valueSize?: number | null, maxEntries?: number | null }> };
 
 export type GetMapEntriesQueryVariables = Exact<{
   mapId: Scalars['Int'];
@@ -139,12 +172,24 @@ export type GetMapEntriesQueryVariables = Exact<{
 
 export type GetMapEntriesQuery = { __typename?: 'Query', map: { __typename?: 'Map', isPerCPU: boolean, entriesCount: number, entries: Array<{ __typename?: 'MapEntry', key: string, value?: string | null, cpuValues: Array<string> }> } };
 
+export type UpdateMapValueMutationVariables = Exact<{
+  mapId: Scalars['Int'];
+  key: Scalars['String'];
+  cpu?: InputMaybe<Scalars['Int']>;
+  value: Scalars['String'];
+  keyFormat: MapEntryFormat;
+  valueFormat: MapEntryFormat;
+}>;
+
+
+export type UpdateMapValueMutation = { __typename?: 'Mutation', updateMapValue?: { __typename?: 'MapUpdateValueResult', error?: string | null } | null };
+
 export type GetMapQueryVariables = Exact<{
   mapId: Scalars['Int'];
 }>;
 
 
-export type GetMapQuery = { __typename?: 'Query', map: { __typename?: 'Map', id: number, error?: string | null, name?: string | null, type: string, flags?: number | null, isPinned?: boolean | null, keySize?: number | null, valueSize?: number | null, maxEntries?: number | null, entriesCount: number, isPerCPU: boolean, isLookupSupported: boolean, programs: Array<{ __typename?: 'Program', id: number, name?: string | null, type: string }> } };
+export type GetMapQuery = { __typename?: 'Query', map: { __typename?: 'Map', id: number, error?: string | null, name?: string | null, type: string, flags?: number | null, isPinned: boolean, pins?: Array<string> | null, keySize?: number | null, valueSize?: number | null, maxEntries?: number | null, entriesCount: number, isPerCPU: boolean, isLookupSupported: boolean, programs: Array<{ __typename?: 'Program', id: number, name?: string | null, type: string }> } };
 
 export type GetProgramQueryVariables = Exact<{
   programId: Scalars['Int'];
@@ -157,5 +202,6 @@ export type GetProgramQuery = { __typename?: 'Query', program: { __typename?: 'P
 export const ConnectedGraphDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ConnectedGraph"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"type"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"IdType"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"connectedGraph"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"from"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"fromType"},"value":{"kind":"Variable","name":{"kind":"Name","value":"type"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"programs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ConnectedGraphQuery, ConnectedGraphQueryVariables>;
 export const NavigationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Navigation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"programs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"tag"}},{"kind":"Field","name":{"kind":"Name","value":"runTime"}},{"kind":"Field","name":{"kind":"Name","value":"runCount"}},{"kind":"Field","name":{"kind":"Name","value":"btfId"}}]}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"flags"}},{"kind":"Field","name":{"kind":"Name","value":"isPinned"}},{"kind":"Field","name":{"kind":"Name","value":"keySize"}},{"kind":"Field","name":{"kind":"Name","value":"valueSize"}},{"kind":"Field","name":{"kind":"Name","value":"maxEntries"}}]}}]}}]} as unknown as DocumentNode<NavigationQuery, NavigationQueryVariables>;
 export const GetMapEntriesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMapEntries"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"keyFormat"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapEntryFormat"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"valueFormat"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapEntryFormat"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"map"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isPerCPU"}},{"kind":"Field","name":{"kind":"Name","value":"entries"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"keyFormat"},"value":{"kind":"Variable","name":{"kind":"Name","value":"keyFormat"}}},{"kind":"Argument","name":{"kind":"Name","value":"valueFormat"},"value":{"kind":"Variable","name":{"kind":"Name","value":"valueFormat"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"cpuValues"}}]}},{"kind":"Field","name":{"kind":"Name","value":"entriesCount"}}]}}]}}]} as unknown as DocumentNode<GetMapEntriesQuery, GetMapEntriesQueryVariables>;
-export const GetMapDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMap"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"map"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"flags"}},{"kind":"Field","name":{"kind":"Name","value":"isPinned"}},{"kind":"Field","name":{"kind":"Name","value":"keySize"}},{"kind":"Field","name":{"kind":"Name","value":"valueSize"}},{"kind":"Field","name":{"kind":"Name","value":"maxEntries"}},{"kind":"Field","name":{"kind":"Name","value":"entriesCount"}},{"kind":"Field","name":{"kind":"Name","value":"isPerCPU"}},{"kind":"Field","name":{"kind":"Name","value":"isLookupSupported"}},{"kind":"Field","name":{"kind":"Name","value":"programs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}}]}}]} as unknown as DocumentNode<GetMapQuery, GetMapQueryVariables>;
+export const UpdateMapValueDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateMapValue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"key"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cpu"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"value"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"keyFormat"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapEntryFormat"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"valueFormat"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapEntryFormat"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateMapValue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"mapId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}}},{"kind":"Argument","name":{"kind":"Name","value":"key"},"value":{"kind":"Variable","name":{"kind":"Name","value":"key"}}},{"kind":"Argument","name":{"kind":"Name","value":"cpu"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cpu"}}},{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"value"}}},{"kind":"Argument","name":{"kind":"Name","value":"keyFormat"},"value":{"kind":"Variable","name":{"kind":"Name","value":"keyFormat"}}},{"kind":"Argument","name":{"kind":"Name","value":"valueFormat"},"value":{"kind":"Variable","name":{"kind":"Name","value":"valueFormat"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"error"}}]}}]}}]} as unknown as DocumentNode<UpdateMapValueMutation, UpdateMapValueMutationVariables>;
+export const GetMapDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMap"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"map"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"flags"}},{"kind":"Field","name":{"kind":"Name","value":"isPinned"}},{"kind":"Field","name":{"kind":"Name","value":"pins"}},{"kind":"Field","name":{"kind":"Name","value":"keySize"}},{"kind":"Field","name":{"kind":"Name","value":"valueSize"}},{"kind":"Field","name":{"kind":"Name","value":"maxEntries"}},{"kind":"Field","name":{"kind":"Name","value":"entriesCount"}},{"kind":"Field","name":{"kind":"Name","value":"isPerCPU"}},{"kind":"Field","name":{"kind":"Name","value":"isLookupSupported"}},{"kind":"Field","name":{"kind":"Name","value":"programs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}}]}}]} as unknown as DocumentNode<GetMapQuery, GetMapQueryVariables>;
 export const GetProgramDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetProgram"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"programId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"program"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"programId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"tag"}},{"kind":"Field","name":{"kind":"Name","value":"runTime"}},{"kind":"Field","name":{"kind":"Name","value":"runCount"}},{"kind":"Field","name":{"kind":"Name","value":"btfId"}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"tasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pid"}},{"kind":"Field","name":{"kind":"Name","value":"fd"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"probeOffset"}},{"kind":"Field","name":{"kind":"Name","value":"probeAddr"}}]}}]}}]}}]} as unknown as DocumentNode<GetProgramQuery, GetProgramQueryVariables>;
