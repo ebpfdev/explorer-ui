@@ -47,11 +47,14 @@ interface editableCellProps {
 function EditableCell({value, format, isEditing, onMove, onActivate, onSubmit, onCancel}: editableCellProps) {
   const [editingValue, setEditingValue] = useState(value);
 
+  function doOnCancel(elem: HTMLSpanElement) {
+    elem.innerText = value;
+    setEditingValue(value);
+    onCancel && onCancel()
+  }
+
   return <td><span
-    onBlur={e => {
-      setEditingValue(value);
-      onCancel && onCancel()
-    }}
+    onBlur={e => doOnCancel(e.target)}
     contentEditable={isEditing}
     onClick={e => {
       if (isEditing) return;
@@ -80,8 +83,8 @@ function EditableCell({value, format, isEditing, onMove, onActivate, onSubmit, o
     }}
     onKeyUp={e => {
       if (e.key === 'Escape') {
-        setEditingValue(value);
-        onCancel && onCancel();
+        // @ts-ignore
+        doOnCancel(e.target);
       } else if (e.key === 'ArrowUp') {
         onMove && onMove('up');
       } else if (e.key === 'ArrowDown') {
