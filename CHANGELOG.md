@@ -1,3 +1,9 @@
+v0.0.4 // 13 june 2023 / map editor and map pins
+--
+
+* map entries table is now editable (for Array(perCPU)/Hash(perCPU) maps)
+* displaying map pins to filesystem
+
 v0.0.3 // 11 june 2023 / more connections
 --
 
