@@ -24,6 +24,7 @@ const GQL_MAP_QUERY = gql(/* GraphQL */ `
       type
       flags
       isPinned
+      pins
       keySize
       valueSize
       maxEntries

@@ -36,7 +36,7 @@ export function Sidebar() {
   const [progsOpened, setProgsOpened] = useState(true);
 
   const {loading, error, data} = useQuery(GQL_QUERY_NAVIGATION, {
-    pollInterval: 500
+    pollInterval: 2000
   });
 
   if (loading) return (

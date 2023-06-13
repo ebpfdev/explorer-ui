@@ -1,8 +1,9 @@
-import {Header, PageLayout} from '@primer/react';
+import {Flash, Header, PageLayout} from '@primer/react';
 import React from 'react';
 import {Outlet} from "react-router-dom";
 import {MarkGithubIcon} from "@primer/octicons-react";
 import {Sidebar} from "../navigation/sidebar";
+import {FlashContainer} from "../components/flash/FlashContainer";
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
         <Sidebar />
       </PageLayout.Pane>
       <PageLayout.Content>
+        <FlashContainer />
         <Outlet/>
       </PageLayout.Content>
     </PageLayout>

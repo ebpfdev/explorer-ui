@@ -1,10 +1,12 @@
 import {GetMapQuery, MapEntryFormat} from "../../graphql/graphql";
 import {useSearchParamsState} from "../../utils/searchParamHook";
-import {useQuery} from "@apollo/client";
+import {useMutation, useQuery} from "@apollo/client";
 import {FileCodeIcon, NumberIcon, TypographyIcon} from "@primer/octicons-react";
 import {ActionList, ActionMenu, Pagination} from "@primer/react";
-import React from "react";
+import React, {useState} from "react";
 import {gql} from "../../graphql";
+import {useAppDispatch} from "../../store/root";
+import {flashActions} from "../../store/flashes";
 
 
 const GQL_MAP_QUERY_ENTRIES = gql(/* GraphQL */ `
@@ -21,10 +23,84 @@ const GQL_MAP_QUERY_ENTRIES = gql(/* GraphQL */ `
 }
 `);
 
+const GQL_UPDATE_MAP_VALUE = gql(/* GraphQL */ `
+  mutation UpdateMapValue(
+      $mapId: Int!, $key: String!, $cpu: Int, $value: String!,
+      $keyFormat: MapEntryFormat!, $valueFormat: MapEntryFormat!
+  ) {
+    updateMapValue(mapId: $mapId, key: $key, cpu: $cpu, value: $value, keyFormat: $keyFormat, valueFormat: $valueFormat) {
+      error
+    }
+  }
+`);
+
+interface editableCellProps {
+  format?: MapEntryFormat;
+  isEditing?: boolean;
+  value: string;
+  onMove?: (direction: 'up'|'down') => void;
+  onActivate?: () => void;
+  onSubmit?: (value: string) => void;
+  onCancel?: () => void;
+}
+
+function EditableCell({value, format, isEditing, onMove, onActivate, onSubmit, onCancel}: editableCellProps) {
+  const [editingValue, setEditingValue] = useState(value);
+
+  return <td><span
+    onBlur={e => {
+      setEditingValue(value);
+      onCancel && onCancel()
+    }}
+    contentEditable={isEditing}
+    onClick={e => {
+      if (isEditing) return;
+      setEditingValue(value);
+      onActivate && onActivate()
+      if (format === MapEntryFormat.Number) {
+        const range = document.createRange();
+        // @ts-ignore
+        range.selectNodeContents(e.target);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+      setTimeout(() => {
+        // @ts-ignore
+        e.target.focus();
+      }, 10);
+    }}
+    onKeyDown={e => {
+      if (e.key === 'Enter') {
+        onSubmit && onSubmit(editingValue);
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }}
+    onKeyUp={e => {
+      if (e.key === 'Escape') {
+        setEditingValue(value);
+        onCancel && onCancel();
+      } else if (e.key === 'ArrowUp') {
+        onMove && onMove('up');
+      } else if (e.key === 'ArrowDown') {
+        onMove && onMove('down');
+      }
+    }}
+    onInput={(e) => {
+      // @ts-ignore
+      setEditingValue(e.target.innerText)
+    }}
+  >{value}</span></td>;
+}
+
 export function EntriesSection({map: {
   id, type, valueSize,
   isPerCPU, isLookupSupported
 }}: { map: GetMapQuery["map"] }) {
+
+  const dispatchApp = useAppDispatch();
 
   const defaultValueFormat = (valueSize || 0) <= 8 ? MapEntryFormat.Number : MapEntryFormat.Hex;
 
@@ -58,6 +134,22 @@ export function EntriesSection({map: {
     [MapEntryFormat.String]: TypographyIcon,
   }
 
+  const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [updateValue, valueUpdateStatus] = useMutation(GQL_UPDATE_MAP_VALUE, {
+    refetchQueries: [GQL_MAP_QUERY_ENTRIES],
+    errorPolicy: 'ignore',
+    onCompleted: (data) => {
+      if (data.updateMapValue?.error) {
+        dispatchApp(flashActions.push({id: Math.random(), message: data.updateMapValue.error, variant: 'danger'}));
+      } else {
+        setEditingCell(null);
+      }
+    },
+    onError: (error) => {
+      dispatchApp(flashActions.push({id: Math.random(), message: error.message, variant: 'danger'}));
+    }
+  });
+
   return !isLookupSupported
     ? <>Lookup is not implemented for map type <b>{type}</b></>
     :
@@ -67,6 +159,7 @@ export function EntriesSection({map: {
           error ? <p>Error: {error.message}</p> :
             <>
               Total entries: {mapEntriesCount}
+              {valueUpdateStatus.loading && <span>Updating...</span>}
               <div className={'map-entries-wrapper'}>
                 <table className={'map-entries'}>
                   <thead>
@@ -112,12 +205,46 @@ export function EntriesSection({map: {
                     </tr>
                   }
                   </thead>
-                  <tbody>
+                  <tbody className={valueFormat === MapEntryFormat.Number ? 'number-values' : ''}>
                   {mapEntries.map((e, i) => (
                     <tr key={i}>
                       <td>{e.key}</td>
-                      {cpus <= 1 ? <td>{e.value}</td> :
-                        Array(cpus).fill(0).map((_, i) => <td key={i}>{e.cpuValues[i] || 'n/a'}</td>)
+                      {cpus <= 1 ?
+                        <EditableCell value={e.value || ''}
+                                      format={valueFormat}
+                                      isEditing={editingCell === `${e.key}`}
+                                      onActivate={() => setEditingCell(`${e.key}`)}
+                                      onCancel={() => setEditingCell(null)}
+                                      onSubmit={value => {
+                                        updateValue({
+                                          variables: {
+                                            mapId: id,
+                                            key: e.key,
+                                            value: value,
+                                            keyFormat: keyFormat,
+                                            valueFormat: valueFormat,
+                                          },
+                                        })
+                                      }}
+                        />
+                        : Array(cpus).fill(0).map((_, i) => (
+                          <EditableCell key={i}
+                                        format={valueFormat}
+                                        value={e.cpuValues[i] || ''}
+                                        isEditing={editingCell === `${e.key}-${i}`}
+                                        onActivate={() => setEditingCell(`${e.key}-${i}`)}
+                                        onCancel={() => setEditingCell(null)}
+                                        onSubmit={value => updateValue({
+                                          variables: {
+                                            mapId: id,
+                                            key: e.key,
+                                            value: value,
+                                            keyFormat: keyFormat,
+                                            valueFormat: valueFormat,
+                                            cpu: i,
+                                          },
+                                        })}
+                          />))
                       }
                     </tr>
                   ))}
