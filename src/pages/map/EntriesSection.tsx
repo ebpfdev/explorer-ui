@@ -1,12 +1,21 @@
 import {GetMapQuery, MapEntryFormat} from "../../graphql/graphql";
 import {useSearchParamsState} from "../../utils/searchParamHook";
 import {useMutation, useQuery} from "@apollo/client";
-import {FileCodeIcon, NumberIcon, TypographyIcon} from "@primer/octicons-react";
-import {ActionList, ActionMenu, Pagination} from "@primer/react";
-import React, {useState} from "react";
+import {
+  FileCodeIcon,
+  KebabHorizontalIcon,
+  NumberIcon,
+  PlusIcon,
+  TrashIcon,
+  TypographyIcon,
+} from "@primer/octicons-react";
+import {ActionList, ActionMenu, IconButton, Pagination} from "@primer/react";
+import React, {useCallback, useMemo, useState} from "react";
 import {gql} from "../../graphql";
 import {useAppDispatch} from "../../store/root";
 import {flashActions} from "../../store/flashes";
+import {EditableCell} from "./EditableCell";
+import {useSet} from "../../utils/useSet";
 
 
 const GQL_MAP_QUERY_ENTRIES = gql(/* GraphQL */ `
@@ -20,13 +29,13 @@ const GQL_MAP_QUERY_ENTRIES = gql(/* GraphQL */ `
       }
       entriesCount
     }
-}
+  }
 `);
 
 const GQL_UPDATE_MAP_VALUE = gql(/* GraphQL */ `
   mutation UpdateMapValue(
-      $mapId: Int!, $key: String!, $cpu: Int, $value: String!,
-      $keyFormat: MapEntryFormat!, $valueFormat: MapEntryFormat!
+    $mapId: Int!, $key: String!, $cpu: Int, $value: String!,
+    $keyFormat: MapEntryFormat!, $valueFormat: MapEntryFormat!
   ) {
     updateMapValue(mapId: $mapId, key: $key, cpu: $cpu, value: $value, keyFormat: $keyFormat, valueFormat: $valueFormat) {
       error
@@ -34,74 +43,33 @@ const GQL_UPDATE_MAP_VALUE = gql(/* GraphQL */ `
   }
 `);
 
-interface editableCellProps {
-  format?: MapEntryFormat;
-  isEditing?: boolean;
-  value: string;
-  onMove?: (direction: 'up'|'down') => void;
-  onActivate?: () => void;
-  onSubmit?: (value: string) => void;
-  onCancel?: () => void;
-}
-
-function EditableCell({value, format, isEditing, onMove, onActivate, onSubmit, onCancel}: editableCellProps) {
-  const [editingValue, setEditingValue] = useState(value);
-
-  function doOnCancel(elem: HTMLSpanElement) {
-    elem.innerText = value;
-    setEditingValue(value);
-    onCancel && onCancel()
+const GQL_CREATE_MAP_VALUE = gql(/* GraphQL */ `
+  mutation CreateMapValue(
+    $mapId: Int!, $key: String!, $values: [String!]!,
+    $keyFormat: MapEntryFormat!, $valueFormat: MapEntryFormat!
+  ) {
+    createMapValue(mapId: $mapId, key: $key, values: $values, keyFormat: $keyFormat, valueFormat: $valueFormat) {
+      error
+    }
   }
+`);
 
-  return <td><span
-    onBlur={e => doOnCancel(e.target)}
-    contentEditable={isEditing}
-    onClick={e => {
-      if (isEditing) return;
-      setEditingValue(value);
-      onActivate && onActivate()
-      if (format === MapEntryFormat.Number) {
-        const range = document.createRange();
-        // @ts-ignore
-        range.selectNodeContents(e.target);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-      }
-      setTimeout(() => {
-        // @ts-ignore
-        e.target.focus();
-      }, 10);
-    }}
-    onKeyDown={e => {
-      if (e.key === 'Enter') {
-        onSubmit && onSubmit(editingValue);
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-    }}
-    onKeyUp={e => {
-      if (e.key === 'Escape') {
-        // @ts-ignore
-        doOnCancel(e.target);
-      } else if (e.key === 'ArrowUp') {
-        onMove && onMove('up');
-      } else if (e.key === 'ArrowDown') {
-        onMove && onMove('down');
-      }
-    }}
-    onInput={(e) => {
-      // @ts-ignore
-      setEditingValue(e.target.innerText)
-    }}
-  >{value}</span></td>;
-}
+const GQL_DELETE_MAP_VALUES = gql(/* GraphQL */ `
+  mutation DeleteMapValues(
+    $mapId: Int!, $keys: [String!]!, $keyFormat: MapEntryFormat!
+  ) {
+    deleteMapValues(mapId: $mapId, keys: $keys, keyFormat: $keyFormat) {
+      error
+    }
+  }
+`);
 
-export function EntriesSection({map: {
-  id, type, valueSize,
-  isPerCPU, isLookupSupported
-}}: { map: GetMapQuery["map"] }) {
+export function EntriesSection({
+                                 map: {
+                                   id, type, valueSize,
+                                   isPerCPU, isLookupSupported
+                                 }
+                               }: { map: GetMapQuery["map"] }) {
 
   const dispatchApp = useAppDispatch();
 
@@ -137,21 +105,89 @@ export function EntriesSection({map: {
     [MapEntryFormat.String]: TypographyIcon,
   }
 
+  const defaultItemValues = useMemo(() => cpus > 1 ? new Array(cpus).fill('') : [''], [cpus]);
+
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [updateValue, valueUpdateStatus] = useMutation(GQL_UPDATE_MAP_VALUE, {
     refetchQueries: [GQL_MAP_QUERY_ENTRIES],
     errorPolicy: 'ignore',
     onCompleted: (data) => {
       if (data.updateMapValue?.error) {
-        dispatchApp(flashActions.push({id: Math.random(), message: data.updateMapValue.error, variant: 'danger'}));
+        dispatchApp(flashActions.push({message: data.updateMapValue.error, variant: 'danger'}));
       } else {
         setEditingCell(null);
       }
     },
     onError: (error) => {
-      dispatchApp(flashActions.push({id: Math.random(), message: error.message, variant: 'danger'}));
+      dispatchApp(flashActions.push({message: error.message, variant: 'danger'}));
     }
   });
+  const [createValue, valueCreateStatus] = useMutation(GQL_CREATE_MAP_VALUE, {
+    refetchQueries: [GQL_MAP_QUERY_ENTRIES],
+    errorPolicy: 'ignore',
+    onCompleted: (data) => {
+      if (data.createMapValue?.error) {
+        dispatchApp(flashActions.push({message: data.createMapValue.error, variant: 'danger'}));
+      } else {
+        setEditingNewItem(false);
+        setNewItemKey('');
+        setNewItemValues(defaultItemValues);
+      }
+    },
+    onError: (error) => {
+      dispatchApp(flashActions.push({message: error.message, variant: 'danger'}));
+    }
+  });
+
+
+  const [getSelected, isSelected, toggleSelected, clearSelected] = useSet([] as string[]);
+
+  const [deleteValues, valueDeleteStatus] = useMutation(GQL_DELETE_MAP_VALUES, {
+    refetchQueries: [GQL_MAP_QUERY_ENTRIES],
+    errorPolicy: 'ignore',
+    onCompleted: (data) => {
+      if (data.deleteMapValues?.error) {
+        dispatchApp(flashActions.push({message: data.deleteMapValues.error, variant: 'danger'}));
+      } else {
+        clearSelected();
+      }
+    },
+    onError: (error) => {
+      dispatchApp(flashActions.push({message: error.message, variant: 'danger'}));
+    }
+  });
+
+  const [newItemKey, setNewItemKey] = useState<string>('');
+  const [newItemValues, setNewItemValues] = useState<string[]>(defaultItemValues);
+  const [editingNewItem, setEditingNewItem] = useState<boolean>(false);
+
+  const submitNewItem = useCallback((key?: string, values?: string[]) => {
+    if (key !== undefined) {
+      setNewItemKey(key);
+    }
+    if (values !== undefined) {
+      setNewItemValues(values);
+    }
+    createValue({
+      variables: {
+        mapId: id,
+        key: key !== undefined ? key : newItemKey,
+        values: values !== undefined ? values : newItemValues,
+        keyFormat: keyFormat,
+        valueFormat: valueFormat,
+      }
+    })
+  }, [createValue, newItemKey, newItemValues, keyFormat, valueFormat]);
+
+  const deleteSelectedItems = useCallback(() => {
+    deleteValues({
+      variables: {
+        mapId: id,
+        keys: getSelected(),
+        keyFormat: keyFormat,
+      }
+    });
+  }, [getSelected, keyFormat]);
 
   return !isLookupSupported
     ? <>Lookup is not implemented for map type <b>{type}</b></>
@@ -163,13 +199,30 @@ export function EntriesSection({map: {
             <>
               Total entries: {mapEntriesCount}
               {valueUpdateStatus.loading && <span>Updating...</span>}
+              {valueCreateStatus.loading && <span>Creating...</span>}
               <div className={'map-entries-wrapper'}>
                 <table className={'map-entries'}>
                   <thead>
                   <tr>
+                    <td>
+                      <ActionMenu>
+                        <ActionMenu.Anchor>
+                          <IconButton icon={KebabHorizontalIcon} variant="invisible" aria-label="Open column options" />
+                        </ActionMenu.Anchor>
+                        <ActionMenu.Overlay>
+                          <ActionList>
+                            <ActionList.Item onClick={() => deleteSelectedItems()}>
+                              <ActionList.LeadingVisual><TrashIcon /></ActionList.LeadingVisual>
+                              Delete selected
+                            </ActionList.Item>
+                          </ActionList>
+                        </ActionMenu.Overlay>
+                      </ActionMenu>
+                    </td>
                     <td rowSpan={cpus > 1 ? 2 : 1}>
                       <ActionMenu>
-                        <ActionMenu.Button aria-label="Select key format" leadingIcon={formatIcons[keyFormat]}>KEY</ActionMenu.Button>
+                        <ActionMenu.Button aria-label="Select key format"
+                                           leadingIcon={formatIcons[keyFormat]}>KEY</ActionMenu.Button>
                         <ActionMenu.Overlay>
                           <ActionList>
                             {[MapEntryFormat.Hex, MapEntryFormat.Number, MapEntryFormat.String].map((format) =>
@@ -183,10 +236,16 @@ export function EntriesSection({map: {
                           </ActionList>
                         </ActionMenu.Overlay>
                       </ActionMenu>
+                      <IconButton aria-label={"Add new row"} icon={PlusIcon}
+                                  onClick={() => {
+                                    setEditingNewItem(true);
+                                    setNewItemKey('');
+                                  }}/>
                     </td>
                     <td colSpan={cpus}>
                       <ActionMenu>
-                        <ActionMenu.Button aria-label="Select value format" leadingIcon={formatIcons[valueFormat]}>VALUE</ActionMenu.Button>
+                        <ActionMenu.Button aria-label="Select value format"
+                                           leadingIcon={formatIcons[valueFormat]}>VALUE</ActionMenu.Button>
                         <ActionMenu.Overlay>
                           <ActionList>
                             {[MapEntryFormat.Hex, MapEntryFormat.Number, MapEntryFormat.String].map((format) =>
@@ -209,8 +268,73 @@ export function EntriesSection({map: {
                   }
                   </thead>
                   <tbody className={valueFormat === MapEntryFormat.Number ? 'number-values' : ''}>
+                  {editingNewItem &&
+                      <tr className='new'>
+                          <td></td>
+                          <EditableCell value={newItemKey}
+                                        format={keyFormat}
+                                        isEditing={editingCell === 'new-key'}
+                                        onActivate={() => setEditingCell('new-key')}
+                                        onCancel={() => setEditingCell(null)}
+                                        onSubmit={(value) => {
+                                          submitNewItem(value);
+                                        }}
+                                        onBlur={(value) => {
+                                          setNewItemKey(value);
+                                          setEditingCell(null);
+                                          return 'keep';
+                                        }}
+                          />
+                        {cpus <= 1 ?
+                          <EditableCell value={newItemValues[0]}
+                                        format={valueFormat}
+                                        isEditing={editingCell === 'new-value'}
+                                        onActivate={() => setEditingCell('new-value')}
+                                        onCancel={() => setEditingCell(null)}
+                                        onBlur={(value) => {
+                                          setNewItemValues([value]);
+                                          setEditingCell(null);
+                                          return 'keep';
+                                        }}
+                                        onSubmit={(value) => {
+                                          submitNewItem(undefined, [value]);
+                                        }}
+                          />
+                          : Array(cpus).fill(0).map((_, i) => (
+                            <EditableCell key={i}
+                                          format={valueFormat}
+                                          value={newItemValues[i]}
+                                          isEditing={editingCell === `new-value-${i}`}
+                                          onActivate={() => setEditingCell(`new-value-${i}`)}
+                                          onCancel={() => setEditingCell(null)}
+                                          onBlur={(value) => {
+                                            setNewItemValues(values => {
+                                              values[i] = value;
+                                              return [...values];
+                                            });
+                                            setEditingCell(null);
+                                            return 'keep';
+                                          }}
+                                          onSubmit={(value) => {
+                                            const values = [...newItemValues];
+                                            values[i] = value;
+                                            submitNewItem(undefined, values);
+                                          }}
+                            />
+                          ))
+                        }
+                      </tr>
+                  }
                   {mapEntries.map((e, i) => (
                     <tr key={i}>
+                      <td>
+                        <input type={'checkbox'}
+                                checked={isSelected(e.key)}
+                                onChange={(event) => {
+                                  toggleSelected(e.key)
+                                }}
+                        />
+                      </td>
                       <td>{e.key}</td>
                       {cpus <= 1 ?
                         <EditableCell value={e.value || ''}
@@ -258,7 +382,7 @@ export function EntriesSection({map: {
                           onPageChange={(e, pageNum) => {
                             setPage(pageNum.toString());
                             e.preventDefault()
-                          }} />
+                          }}/>
             </>
       }
     </div>

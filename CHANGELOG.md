@@ -1,3 +1,8 @@
+next // 18 june 2023 / add and delete map entries
+--
+
+* add and delete entries from map
+
 v0.0.5 // 13 june 2023 / map editor and map pins
 --
 

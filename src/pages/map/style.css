@@ -33,11 +33,14 @@
 }
 
 .map-entries tbody td>span {
-    text-decoration: greenyellow dashed underline;
     width: 100%;
     display: block;
     height: max-content;
     min-height: 1em;
+}
+
+.map-entries tbody tr.new td {
+    background: #c7eeb7;
 }
 
 .map-entries tbody td>span[contenteditable="true"] {

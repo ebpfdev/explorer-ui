@@ -1,8 +1,10 @@
 
-import {createAction, Middleware} from "@reduxjs/toolkit";
+import {createAction, Middleware, PayloadAction} from "@reduxjs/toolkit";
+
+type FlashId = string;
 
 export interface FlashData {
-  id: number;
+  id: FlashId;
   variant: 'success' | 'danger' | 'warning' | 'default';
   message: string;
 }
@@ -12,8 +14,12 @@ export const initialState = {
 };
 
 export const flashActions = {
-  push: createAction<FlashData>('flashes/flash'),
-  dismiss: createAction<number>('flashes/dismiss'),
+  push: createAction(
+    'flashes/flash',
+    (data: Omit<FlashData, 'id'>) => ({
+      'payload': {...data, id: Math.random().toString()} as FlashData
+    })),
+  dismiss: createAction<string>('flashes/dismiss'),
 };
 
 export const flashExpiringMiddleware: Middleware =
