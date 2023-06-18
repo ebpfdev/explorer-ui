@@ -1,4 +1,4 @@
-next // 18 june 2023 / add and delete map entries
+v0.0.6 // 18 june 2023 / add and delete map entries
 --
 
 * add and delete entries from map
