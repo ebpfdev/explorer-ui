@@ -204,7 +204,7 @@ export function EntriesSection({
                 <table className={'map-entries'}>
                   <thead>
                   <tr>
-                    <td>
+                    <td rowSpan={cpus > 1 ? 2 : 1}>
                       <ActionMenu>
                         <ActionMenu.Anchor>
                           <IconButton icon={KebabHorizontalIcon} variant="invisible" aria-label="Open column options" />

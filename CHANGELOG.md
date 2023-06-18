@@ -1,3 +1,8 @@
+v0.0.7 // 18 june 2023 / bugfix
+--
+
+* fixed entries table in per-cpu mode
+
 v0.0.6 // 18 june 2023 / add and delete map entries
 --
 
